@@ -353,6 +353,93 @@ function library:showKeybindContextMenu(input, flag, applyCallback)
     overlay.MouseButton2Click:Connect(closeMenu)
 end
 
+-- Colorpicker context menu (Copy/Paste Color)
+library.copiedColor = Color3.fromRGB(255, 255, 255)
+function library:showColorContextMenu(input, flag, applyCallback)
+    if library._keybindCtxMenu and library._keybindCtxMenu.Parent then
+        library._keybindCtxMenu:Destroy()
+    end
+    if library._ctxOverlay and library._ctxOverlay.Parent then
+        library._ctxOverlay:Destroy()
+    end
+
+    local mousePos = inputService:GetMouseLocation()
+    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Einstein_Notifications")
+    if not ctxGui then return end
+
+    local overlay = Instance.new("TextButton")
+    overlay.Name = "ContextMenuOverlay"
+    overlay.BackgroundTransparency = 1
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.ZIndex = 9998
+    overlay.Text = ""
+    overlay.Parent = ctxGui
+    library._ctxOverlay = overlay
+
+    local ctx = Instance.new("Frame")
+    ctx.Name = "ColorContextMenu"
+    ctx.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    ctx.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ctx.BorderSizePixel = 2
+    ctx.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y - 36)
+    ctx.Size = UDim2.new(0, 90, 0, 40)
+    ctx.ZIndex = 9999
+    ctx.Parent = ctxGui
+    library._keybindCtxMenu = ctx
+
+    local inner = Instance.new("Frame")
+    inner.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    inner.BorderColor3 = Color3.fromRGB(40, 40, 40)
+    inner.Size = UDim2.new(1, 0, 1, 0)
+    inner.ZIndex = 10000
+    inner.Parent = ctx
+    
+    local function closeMenu()
+        if overlay then overlay:Destroy() end
+        if ctx then ctx:Destroy() end
+    end
+
+    local function makeOption(text, yPos, onClick)
+        local btn = Instance.new("TextButton")
+        btn.BackgroundTransparency = 1
+        btn.Size = UDim2.new(1, 0, 0, 20)
+        btn.Position = UDim2.new(0, 0, 0, yPos)
+        btn.Font = Enum.Font.Code
+        btn.Text = "  " .. text
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        btn.TextSize = 12
+        btn.ZIndex = 10001
+        btn.Parent = inner
+
+        btn.MouseEnter:Connect(function()
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundTransparency = 0.85
+            btn.BackgroundColor3 = library.libColor
+        end)
+        btn.MouseLeave:Connect(function()
+            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            btn.BackgroundTransparency = 1
+        end)
+        btn.MouseButton1Click:Connect(function()
+            onClick()
+            closeMenu()
+        end)
+    end
+
+    makeOption("Copy", 0, function()
+        library.copiedColor = library.flags[flag]
+    end)
+    makeOption("Paste", 20, function()
+        if applyCallback then
+            applyCallback(library.copiedColor)
+        end
+    end)
+
+    overlay.MouseButton1Click:Connect(closeMenu)
+    overlay.MouseButton2Click:Connect(closeMenu)
+end
+
 -- Notification System
 library.activeNotifications = {}
 library.notifyDefaults = {
