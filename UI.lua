@@ -2689,13 +2689,7 @@ function library:loadAutoConfig()
     end
 end
 
-local rageTab = library:addTab("Rage")
-local legitTab = library:addTab("Legit")
-local humanTab = library:addTab("Humanize")
-local visualsTab = library:addTab("ESP")
-local visualsTab2 = library:addTab("Visuals")
-local worldTab = library:addTab("World")
-local miscTab = library:addTab("Misc")
+
 local settingsTab = library:addTab("Settings")
 local configs = settingsTab:createGroup('left', 'Configs')
 local uisettings = settingsTab:createGroup('center', 'UI Settings')
