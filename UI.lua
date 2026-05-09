@@ -9,7 +9,7 @@ local mouse          = localPlayer:GetMouse()
 local menu           = game:GetObjects("rbxassetid://12702460854")[1]
 menu.bg.Position     = UDim2.new(0.5,-menu.bg.Size.X.Offset/2,0.5,-menu.bg.Size.Y.Offset/2)
 menu.Parent          = game:GetService("CoreGui")
-local library = {cheatname = "";ext = "";gamename = "";colorpicking = false;tabbuttons = {};tabs = {};options = {};flags = {};scrolling = false;playing = false;multiZindex = 200;toInvis = {};libColor = Color3.fromRGB(220, 181, 255);disabledcolor = Color3.fromRGB(233, 0, 0);blacklisted = {Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.UserInputType.MouseMovement};accentElements = {};onAccentChanged = {};copiedColor = nil}
+local library = {cheatname = "";ext = "";gamename = "";colorpicking = false;tabbuttons = {};tabs = {};tabsData = {};options = {};flags = {};scrolling = false;playing = false;multiZindex = 200;toInvis = {};libColor = Color3.fromRGB(220, 181, 255);disabledcolor = Color3.fromRGB(233, 0, 0);blacklisted = {Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.UserInputType.MouseMovement};accentElements = {};onAccentChanged = {};copiedColor = nil}
 
 local function clamp(val, lo, hi)
     if val < lo then return lo end
@@ -824,6 +824,7 @@ function library:addTab(name)
     end)
 
     local tab = {}
+    library.tabsData[name] = tab
     local groupCount = 0
     local jigCount = 0
     local topStuff = 2000
@@ -2677,6 +2678,9 @@ function library:getAutoload()
     end
     return nil
 end
+function library:getTab(name)
+    return library.tabsData[name]
+end
 
 function library:loadAutoConfig()
     local name = library:getAutoload()
@@ -2686,11 +2690,17 @@ function library:loadAutoConfig()
             library.options["selected_config"].changeState(name)
         end
         library:loadConfig()
-    end
 end
 
-
+local rageTab = library:addTab("Rage")
+local legitTab = library:addTab("Legit")
+local humanTab = library:addTab("Humanize")
+local visualsTab = library:addTab("ESP")
+local visualsTab2 = library:addTab("Visuals")
+local worldTab = library:addTab("World")
+local miscTab = library:addTab("Misc")
 local settingsTab = library:addTab("Settings")
+
 local configs = settingsTab:createGroup('left', 'Configs')
 local uisettings = settingsTab:createGroup('center', 'UI Settings')
 local notifysettings = settingsTab:createGroup('center', 'Notifications')
