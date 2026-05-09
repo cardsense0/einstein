@@ -2690,6 +2690,7 @@ function library:loadAutoConfig()
             library.options["selected_config"].changeState(name)
         end
         library:loadConfig()
+    end
 end
 
 local rageTab = library:addTab("Rage")
