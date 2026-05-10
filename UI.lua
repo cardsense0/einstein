@@ -2635,6 +2635,7 @@ function library:addTab(name)
         tabContainer.BorderColor3 = Color3.fromRGB(30, 30, 30)
         tabContainer.BorderSizePixel = 2
         tabContainer.Size = UDim2.new(1, 0, 0, 20)
+        tabContainer.Position = UDim2.new(0, 0, 0, 1)
         tabContainer.ZIndex = 3
         
         local tabLayout = Instance.new("UIListLayout")
@@ -2642,7 +2643,7 @@ function library:addTab(name)
         tabLayout.FillDirection = Enum.FillDirection.Horizontal
         
         local accent = Instance.new("Frame")
-        accent.Parent = tabContainer
+        accent.Parent = wrapper
         accent.BackgroundColor3 = library.libColor
         table.insert(library.accentElements, {obj = accent, prop = "BackgroundColor3"})
         accent.BorderSizePixel = 0
@@ -2683,7 +2684,7 @@ function library:addTab(name)
             tabBoxes[i] = groupbox
             
             groupbox.Parent = wrapper
-            groupbox.Position = UDim2.new(0, 0, 0, 19)
+            groupbox.Position = UDim2.new(0, 0, 0, 21)
             groupbox.ZIndex = 2
             
             local title = groupbox:FindFirstChild("TextLabel")
@@ -2699,7 +2700,7 @@ function library:addTab(name)
             
             groupbox:GetPropertyChangedSignal("Size"):Connect(function()
                 if groupbox.Visible then
-                    wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 19)
+                    wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 21)
                 end
             end)
             
@@ -2711,7 +2712,7 @@ function library:addTab(name)
                     b.TextColor3 = j == i and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
                     tabBoxes[j].Visible = j == i
                 end
-                wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 19)
+                wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 21)
             end)
         end
         
