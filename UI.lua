@@ -1128,7 +1128,6 @@ function library:addTab(name)
                 button.TextSize = 13.000
                 button.TextStrokeTransparency = 0.000
                 button.TextXAlignment = Enum.TextXAlignment.Center
-                button.TextXAlignment = Enum.TextXAlignment.Right
     
                 function updateValue(val)
                     if library.colorpicking then return end
