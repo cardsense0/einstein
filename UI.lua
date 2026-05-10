@@ -459,6 +459,7 @@ library.options["notify_offset_y"] = {skipflag = false}
 local notifySGui = Instance.new("ScreenGui")
 notifySGui.Name = "Einstein_Notifications"
 notifySGui.Parent = game:GetService("CoreGui")
+notifySGui.DisplayOrder = 100
 
 local dummyTextString = "Drag me to set position"
 local textService = game:GetService("TextService")
@@ -2621,6 +2622,101 @@ function library:addTab(name)
         end
         return group, groupbox
     end
+
+    function tab:createTabbedGroup(pos, tabNames)
+        local wrapper = Instance.new("Frame")
+        wrapper.Parent = newTab[pos]
+        wrapper.BackgroundTransparency = 1
+        wrapper.Size = UDim2.new(0, 211, 0, 20)
+
+        local tabContainer = Instance.new("Frame")
+        tabContainer.Parent = wrapper
+        tabContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        tabContainer.BorderColor3 = Color3.fromRGB(30, 30, 30)
+        tabContainer.BorderSizePixel = 2
+        tabContainer.Size = UDim2.new(1, 0, 0, 20)
+        tabContainer.ZIndex = 3
+        
+        local tabLayout = Instance.new("UIListLayout")
+        tabLayout.Parent = tabContainer
+        tabLayout.FillDirection = Enum.FillDirection.Horizontal
+        
+        local accent = Instance.new("Frame")
+        accent.Parent = tabContainer
+        accent.BackgroundColor3 = library.libColor
+        table.insert(library.accentElements, {obj = accent, prop = "BackgroundColor3"})
+        accent.BorderSizePixel = 0
+        accent.Size = UDim2.new(1, 0, 0, 1)
+        accent.ZIndex = 4
+        
+        local btnWidth = 211 / #tabNames
+        local tabGroups = {}
+        local tabBoxes = {}
+        local tabButtons = {}
+        
+        for i, tName in ipairs(tabNames) do
+            local btn = Instance.new("TextButton")
+            btn.Parent = tabContainer
+            btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+            btn.BackgroundTransparency = i == 1 and 0 or 0.4
+            btn.BorderSizePixel = 0
+            btn.Size = UDim2.new(0, btnWidth, 1, 0)
+            btn.Font = Enum.Font.Code
+            btn.Text = string.lower(tName)
+            btn.TextColor3 = i == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+            btn.TextSize = 13
+            btn.ZIndex = 4
+            tabButtons[i] = btn
+            
+            if i < #tabNames then
+                local div = Instance.new("Frame")
+                div.Parent = btn
+                div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                div.BorderSizePixel = 0
+                div.Size = UDim2.new(0, 2, 1, 0)
+                div.Position = UDim2.new(1, -1, 0, 0)
+                div.ZIndex = 5
+            end
+
+            local group, groupbox = tab:createGroup(pos, tName)
+            tabGroups[tName] = group
+            tabBoxes[i] = groupbox
+            
+            groupbox.Parent = wrapper
+            groupbox.Position = UDim2.new(0, 0, 0, 19)
+            groupbox.ZIndex = 2
+            
+            local title = groupbox:FindFirstChild("TextLabel")
+            if title then title.Visible = false end
+            for _, c in ipairs(groupbox:GetChildren()) do
+                if c.ClassName == "Frame" and c.BackgroundColor3 == Color3.fromRGB(20,20,20) and c.Size.Y.Offset == 3 then
+                    c.Visible = false
+                end
+                if c.ClassName == "Frame" and c.BackgroundColor3 == library.libColor then
+                    c.Visible = false
+                end
+            end
+            
+            groupbox:GetPropertyChangedSignal("Size"):Connect(function()
+                if groupbox.Visible then
+                    wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 19)
+                end
+            end)
+            
+            groupbox.Visible = i == 1
+            
+            btn.MouseButton1Click:Connect(function()
+                for j, b in ipairs(tabButtons) do
+                    b.BackgroundTransparency = j == i and 0 or 0.4
+                    b.TextColor3 = j == i and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+                    tabBoxes[j].Visible = j == i
+                end
+                wrapper.Size = UDim2.new(0, 211, 0, groupbox.Size.Y.Offset + 19)
+            end)
+        end
+        
+        return tabGroups
+    end
     return tab
 end
 
@@ -3115,9 +3211,23 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 lbl.TextXAlignment = Enum.TextXAlignment.Left
                 lbl.ZIndex = 403
                 lbl.Parent = kbContent
+                
+                local modeLbl = Instance.new("TextLabel")
+                modeLbl.Name = "Mode"
+                modeLbl.BackgroundTransparency = 1
+                modeLbl.Size = UDim2.new(1, -6, 1, 0)
+                modeLbl.Position = UDim2.new(0, 0, 0, 0)
+                modeLbl.Font = Enum.Font.Code
+                modeLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+                modeLbl.TextSize = 13
+                modeLbl.TextXAlignment = Enum.TextXAlignment.Right
+                modeLbl.ZIndex = 403
+                modeLbl.Parent = lbl
+
                 kbLabels[i] = lbl
             end
-            lbl.Text = string.format("  [%s] %s (%s)", bind.key, bind.text, string.lower(bind.mode))
+            lbl.Text = string.format("  [%s] %s", bind.key, bind.text)
+            lbl.Mode.Text = string.format("[%s]", string.lower(bind.mode))
             lbl.Visible = true
             kbHeight = kbHeight + 18
         end
