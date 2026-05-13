@@ -1207,19 +1207,9 @@ function library:addTab(name)
                 colorpicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 colorpicker.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 colorpicker.BorderSizePixel = 3
-                
-                local pX = 0.86
-                if args.pos then
-                    if args.pos == 2 then pX = 0.72
-                    elseif args.pos == 3 then pX = 0.58
-                    elseif args.pos == 4 then pX = 0.44
-                    end
-                elseif args.second then
-                    pX = 0.72
-                end
-                
-                colorpicker.Position = UDim2.new(pX, 4, 0.272, 0)
+                colorpicker.Position = args.second and UDim2.new(0.720000029, 4, 0.272000015, 0) or UDim2.new(0.860000014, 4, 0.272000015, 0)
                 colorpicker.Size = UDim2.new(0, 20, 0, 10)
+                
                 mid.Name = "mid"
                 mid.Parent = colorpicker
                 mid.BackgroundColor3 = Color3.fromRGB(69, 23, 255)
@@ -1436,7 +1426,6 @@ function library:addTab(name)
                 library.options[args.flag] = {type = "colorpicker",changeState = updateValue,skipflag = args.skipflag,oldargs = args}
 
                 updateValue(args.color or Color3.new(1,1,1))
-                return colorpicker
             end
             return toggle
         end
@@ -2868,7 +2857,8 @@ end
 
 function library:getAutoload()
     if isfile("Einstein/autoload.txt") then
-        return readfile("Einstein/autoload.txt")
+        local content = readfile("Einstein/autoload.txt")
+        return content:gsub("[\n\r]", ""):gsub("^%s*(.-)%s*$", "%1")
     end
     return nil
 end
@@ -2899,7 +2889,7 @@ local settingsTab = library:addTab("Settings")
 local configs = settingsTab:createGroup('left', 'Configs')
 local uisettings = settingsTab:createGroup('center', 'UI Settings')
 local notifysettings = settingsTab:createGroup('center', 'Notifications')
-local othersettings = settingsTab:createGroup('right', 'Other')
+local othersettings = settingsTab:createGroup('right', 'Extra')
 
 configs:addTextbox({text = "Config Name",flag = "config_name",skipflag = true})
 configs:addList({text = "Config List",flag = "selected_config",values = {},skipflag = true})
@@ -3013,6 +3003,39 @@ othersettings:addButton({text = "Server Hop",callback = function()
         end
     end)
 end})
+
+othersettings:addDivider()
+othersettings:addButtonRow({
+    {text = "Unload", callback = function()
+        if library.Unloaded then return end
+        library.Unloaded = true
+        if library.OnUnload then pcall(library.OnUnload) end
+        if getgenv and getgenv().einsteinhook_unload then pcall(getgenv().einsteinhook_unload) end
+        
+        if menu then menu:Destroy() end
+        if notifySGui then notifySGui:Destroy() end
+        if library._colorCtxMenu then library._colorCtxMenu:Destroy() end
+        if library._ctxOverlay then library._ctxOverlay:Destroy() end
+        if library._keybindCtxMenu then library._keybindCtxMenu:Destroy() end
+    end},
+    {text = "Reload", callback = function()
+        if library.Unloaded then return end
+        library.Unloaded = true
+        if library.OnUnload then pcall(library.OnUnload) end
+        if getgenv and getgenv().einsteinhook_unload then pcall(getgenv().einsteinhook_unload) end
+        
+        if menu then menu:Destroy() end
+        if notifySGui then notifySGui:Destroy() end
+        if library._colorCtxMenu then library._colorCtxMenu:Destroy() end
+        if library._ctxOverlay then library._ctxOverlay:Destroy() end
+        if library._keybindCtxMenu then library._keybindCtxMenu:Destroy() end
+        
+        task.wait(0.2)
+        if getgenv and getgenv().einsteinhook_reload then 
+            pcall(getgenv().einsteinhook_reload) 
+        end
+    end}
+})
 
 -- ==========================================
 -- ADVANCED UI PANELS (Watermark, Keybinds, Arraylist)
