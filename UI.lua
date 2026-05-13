@@ -3202,6 +3202,7 @@ local kbLabels = {}
 local alLabels = {}
 
 game:GetService("RunService").RenderStepped:Connect(function()
+    if library.Unloaded then return end
     -- Watermark
     frames = frames + 1
     if tick() - lastTick >= 1 then
