@@ -1080,7 +1080,10 @@ function library:addTab(name)
 			end)
 
             library.flags[args.flag] = false
+            args._groupname = groupname
             library.options[args.flag] = {type = "toggle",changeState = toggle,skipflag = args.skipflag,oldargs = args}
+            local _parentToggleText = args.text or args.flag
+            local _parentToggleFlag = args.flag
             table.insert(library.onAccentChanged, function(newColor)
                 if state then
                     front.BackgroundColor3 = newColor
@@ -1089,6 +1092,8 @@ function library:addTab(name)
             local toggle = {}
             function toggle:addKeybind(args)
                 if not args.flag then return warn("⚠️ incorrect arguments ⚠️ - missing args on toggle:keybind") end
+                args._parentToggleText = _parentToggleText
+                args._parentToggleFlag = _parentToggleFlag
                 local next = false
                 
                 local keybind = Instance.new("Frame")
@@ -1177,7 +1182,7 @@ function library:addTab(name)
                 end)
     
                 library.flags[args.flag] = Enum.KeyCode.Unknown
-                library.options[args.flag] = {type = "keybind", mode = "Always", changeState = updateValue, skipflag = args.skipflag, oldargs = args}
+                library.options[args.flag] = {type = "keybind", mode = "Always", changeState = updateValue, skipflag = args.skipflag, oldargs = args, parentToggleFlag = args._parentToggleFlag}
     
                 updateValue(args.key or Enum.KeyCode.Unknown)
             end
@@ -3194,6 +3199,7 @@ local frames, lastTick = 0, tick()
 
 -- 2. KEYBINDS
 local kbPanel, kbContent, kbLayout = library:CreateDraggablePanel("Keybinds", UDim2.new(0, 10, 0.5, -100), false)
+kbLayout.Padding = UDim.new(0, 1)
 
 -- 3. ARRAYLIST
 local alPanel, alContent, alLayout = library:CreateDraggablePanel("Arraylist", UDim2.new(1, -160, 0, 10), true)
@@ -3229,7 +3235,17 @@ game:GetService("RunService").RenderStepped:Connect(function()
             if opt.type == "keybind" and flag ~= "MenuKeybind" then
                 if library.flags[flag] and library.flags[flag] ~= Enum.KeyCode.Unknown then
                     local keyNameStr = keyNames[library.flags[flag]] or library.flags[flag].Name
-                    table.insert(activeBinds, {text = tostring(opt.oldargs.text), key = keyNameStr, mode = opt.mode or "Always"})
+                    -- Get the display name from parent toggle text, or keybind text, or flag
+                    local displayName = opt.oldargs._parentToggleText or opt.oldargs.text or flag
+                    -- Determine if this keybind's parent toggle is active
+                    local isActive = false
+                    local parentFlag = opt.parentToggleFlag or opt.oldargs._parentToggleFlag
+                    if parentFlag and library.flags[parentFlag] then
+                        isActive = true
+                    elseif opt.mode == "Always" then
+                        isActive = true
+                    end
+                    table.insert(activeBinds, {text = tostring(displayName), key = keyNameStr, mode = opt.mode or "Always", active = isActive})
                 end
             end
         end
@@ -3240,10 +3256,11 @@ game:GetService("RunService").RenderStepped:Connect(function()
             if not lbl then
                 lbl = Instance.new("TextLabel")
                 lbl.BackgroundTransparency = 1
-                lbl.Size = UDim2.new(1, 0, 0, 18)
+                lbl.Size = UDim2.new(1, -8, 0, 20)
                 lbl.Font = Enum.Font.Code
                 lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
                 lbl.TextSize = 13
+                lbl.TextStrokeTransparency = 0
                 lbl.TextXAlignment = Enum.TextXAlignment.Left
                 lbl.ZIndex = 403
                 lbl.Parent = kbContent
@@ -3251,11 +3268,12 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 local modeLbl = Instance.new("TextLabel")
                 modeLbl.Name = "Mode"
                 modeLbl.BackgroundTransparency = 1
-                modeLbl.Size = UDim2.new(1, -6, 1, 0)
+                modeLbl.Size = UDim2.new(1, -8, 1, 0)
                 modeLbl.Position = UDim2.new(0, 0, 0, 0)
                 modeLbl.Font = Enum.Font.Code
-                modeLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+                modeLbl.TextColor3 = Color3.fromRGB(120, 120, 120)
                 modeLbl.TextSize = 13
+                modeLbl.TextStrokeTransparency = 0
                 modeLbl.TextXAlignment = Enum.TextXAlignment.Right
                 modeLbl.ZIndex = 403
                 modeLbl.Parent = lbl
@@ -3264,14 +3282,20 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
             lbl.Text = string.format("  [%s] %s", bind.key, bind.text)
             lbl.Mode.Text = string.format("[%s]", string.lower(bind.mode))
+            -- Highlight active modules in green
+            if bind.active then
+                lbl.TextColor3 = Color3.fromRGB(100, 255, 100)
+            else
+                lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
             lbl.Visible = true
-            kbHeight = kbHeight + 18
+            kbHeight = kbHeight + 20
         end
         
         for i = #activeBinds + 1, #kbLabels do
             kbLabels[i].Visible = false
         end
-        kbPanel.Size = UDim2.new(0, 150, 0, math.max(kbHeight + 21, 39)) -- Min size so it doesn't shrink to just heading
+        kbPanel.Size = UDim2.new(0, 200, 0, math.max(kbHeight + 28, 39))
     else
         kbPanel.Visible = false
     end
