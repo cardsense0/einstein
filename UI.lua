@@ -3251,7 +3251,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
     -- Keybinds
     if library.flags["show keybinds"] then
-        kbPanel.Visible = true
         local activeBinds = {}
         for flag, opt in pairs(library.options) do
             if opt.type == "keybind" and flag ~= "MenuKeybind" then
@@ -3275,74 +3274,101 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 end
             end
         end
-        
-        local kbHeight = 0
-        for i, bind in ipairs(activeBinds) do
-            local lbl = kbLabels[i]
-            if not lbl then
-                lbl = Instance.new("TextLabel")
-                lbl.BackgroundTransparency = 1
-                lbl.Size = UDim2.new(1, -8, 0, 20)
-                lbl.Font = Enum.Font.Code
-                lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-                lbl.TextSize = 13
-                lbl.TextStrokeTransparency = 0
-                lbl.TextXAlignment = Enum.TextXAlignment.Left
-                lbl.ZIndex = 403
-                lbl.Parent = kbContent
-                
-                local modeLbl = Instance.new("TextLabel")
-                modeLbl.Name = "Mode"
-                modeLbl.BackgroundTransparency = 1
-                modeLbl.Size = UDim2.new(1, -8, 1, 0)
-                modeLbl.Position = UDim2.new(0, 0, 0, 0)
-                modeLbl.Font = Enum.Font.Code
-                modeLbl.TextColor3 = Color3.fromRGB(120, 120, 120)
-                modeLbl.TextSize = 13
-                modeLbl.TextStrokeTransparency = 0
-                modeLbl.TextXAlignment = Enum.TextXAlignment.Right
-                modeLbl.ZIndex = 403
-                modeLbl.Parent = lbl
 
-                kbLabels[i] = lbl
+        -- Hide the panel entirely when there are no active keybinds
+        if #activeBinds == 0 then
+            kbPanel.Visible = false
+        else
+            kbPanel.Visible = true
+
+            -- Calculate dynamic width based on longest entry
+            local _ts = game:GetService("TextService")
+            local maxLeftW = 0
+            local modeW = 0
+            for _, bind in ipairs(activeBinds) do
+                local leftStr = string.format("  [%s] %s", bind.key, bind.text)
+                local modeStr = string.format("[%s]  ", string.lower(bind.mode))
+                local leftSize = _ts:GetTextSize(leftStr, 13, Enum.Font.Code, Vector2.new(9999, 20))
+                local modeSize = _ts:GetTextSize(modeStr, 13, Enum.Font.Code, Vector2.new(9999, 20))
+                if leftSize.X > maxLeftW then maxLeftW = leftSize.X end
+                if modeSize.X > modeW then modeW = modeSize.X end
             end
-            lbl.Text = string.format("  [%s] %s", bind.key, bind.text)
-            lbl.Mode.Text = string.format("[%s]", string.lower(bind.mode))
-            -- Apply arraylist-style accent gradient when active, dim when inactive
-            if bind.active then
-                lbl.TextColor3 = Color3.new(1, 1, 1)
-                local grad = lbl:FindFirstChild("UIGradient")
-                if not grad then
-                    grad = Instance.new("UIGradient")
-                    grad.Rotation = 45
-                    grad.Parent = lbl
+            local panelW = math.max(maxLeftW + modeW + 20, 200)
+
+            local kbHeight = 0
+            for i, bind in ipairs(activeBinds) do
+                local lbl = kbLabels[i]
+                if not lbl then
+                    lbl = Instance.new("TextLabel")
+                    lbl.BackgroundTransparency = 1
+                    lbl.Size = UDim2.new(1, 0, 0, 20)
+                    lbl.Font = Enum.Font.Code
+                    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    lbl.TextSize = 13
+                    lbl.TextStrokeTransparency = 0
+                    lbl.TextXAlignment = Enum.TextXAlignment.Left
+                    lbl.TextTruncate = Enum.TextTruncate.AtEnd
+                    lbl.ClipsDescendants = true
+                    lbl.ZIndex = 403
+                    lbl.Parent = kbContent
+
+                    local modeLbl = Instance.new("TextLabel")
+                    modeLbl.Name = "Mode"
+                    modeLbl.BackgroundTransparency = 1
+                    modeLbl.Font = Enum.Font.Code
+                    modeLbl.TextColor3 = Color3.fromRGB(120, 120, 120)
+                    modeLbl.TextSize = 13
+                    modeLbl.TextStrokeTransparency = 0
+                    modeLbl.TextXAlignment = Enum.TextXAlignment.Right
+                    modeLbl.ZIndex = 404
+                    modeLbl.Parent = lbl
+
+                    kbLabels[i] = lbl
                 end
-                local c = library.libColor
-                grad.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, c),
-                    ColorSequenceKeypoint.new(0.35, c),
-                    ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-                    ColorSequenceKeypoint.new(0.65, c),
-                    ColorSequenceKeypoint.new(1, c)
-                })
-                local waveOffset = math.sin(tick() * 0.8 + (i * 0.3))
-                grad.Offset = Vector2.new(waveOffset, 0)
-                grad.Enabled = true
-            else
-                lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-                local grad = lbl:FindFirstChild("UIGradient")
-                if grad then
-                    grad.Enabled = false
+                lbl.Text = string.format("  [%s] %s", bind.key, bind.text)
+                lbl.Mode.Text = string.format("[%s]  ", string.lower(bind.mode))
+
+                -- Size: main label leaves room for mode on the right
+                lbl.Size = UDim2.new(1, 0, 0, 20)
+                lbl.Mode.Size = UDim2.new(0, modeW + 4, 1, 0)
+                lbl.Mode.Position = UDim2.new(1, -(modeW + 4), 0, 0)
+
+                -- Apply arraylist-style accent gradient when active, dim when inactive
+                if bind.active then
+                    lbl.TextColor3 = Color3.new(1, 1, 1)
+                    local grad = lbl:FindFirstChild("UIGradient")
+                    if not grad then
+                        grad = Instance.new("UIGradient")
+                        grad.Rotation = 45
+                        grad.Parent = lbl
+                    end
+                    local c = library.libColor
+                    grad.Color = ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, c),
+                        ColorSequenceKeypoint.new(0.35, c),
+                        ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+                        ColorSequenceKeypoint.new(0.65, c),
+                        ColorSequenceKeypoint.new(1, c)
+                    })
+                    local waveOffset = math.sin(tick() * 0.8 + (i * 0.3))
+                    grad.Offset = Vector2.new(waveOffset, 0)
+                    grad.Enabled = true
+                else
+                    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    local grad = lbl:FindFirstChild("UIGradient")
+                    if grad then
+                        grad.Enabled = false
+                    end
                 end
+                lbl.Visible = true
+                kbHeight = kbHeight + 20
             end
-            lbl.Visible = true
-            kbHeight = kbHeight + 20
+
+            for i = #activeBinds + 1, #kbLabels do
+                kbLabels[i].Visible = false
+            end
+            kbPanel.Size = UDim2.new(0, panelW, 0, kbHeight + 28)
         end
-        
-        for i = #activeBinds + 1, #kbLabels do
-            kbLabels[i].Visible = false
-        end
-        kbPanel.Size = UDim2.new(0, 200, 0, math.max(kbHeight + 28, 39))
     else
         kbPanel.Visible = false
     end
