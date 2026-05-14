@@ -1161,8 +1161,27 @@ function library:addTab(name)
                             button.TextColor3 = Color3.fromRGB(155, 155, 155)
                         end
                     end
-                    if not next and key == library.flags[args.flag] and args.callback then
-                        args.callback()
+                    if not next and key == library.flags[args.flag] then
+                        local opt = library.options[args.flag]
+                        if opt then
+                            local m = opt.mode or "Always"
+                            if m == "Toggle" then
+                                opt._active = not opt._active
+                            elseif m == "Hold" then
+                                opt._active = true
+                            end
+                        end
+                        if args.callback then args.callback() end
+                    end
+                end)
+
+                inputService.InputEnded:Connect(function(key)
+                    local key = key.KeyCode == Enum.KeyCode.Unknown and key.UserInputType or key.KeyCode
+                    if key == library.flags[args.flag] then
+                        local opt = library.options[args.flag]
+                        if opt and (opt.mode or "Always") == "Hold" then
+                            opt._active = false
+                        end
                     end
                 end)
     
@@ -1178,11 +1197,14 @@ function library:addTab(name)
                     if library.colorpicking then return end
                     library:showKeybindContextMenu(nil, args.flag, function(mode)
                         library.options[args.flag].mode = mode
+                        if mode == "Always" then
+                            library.options[args.flag]._active = nil
+                        end
                     end)
                 end)
     
                 library.flags[args.flag] = Enum.KeyCode.Unknown
-                library.options[args.flag] = {type = "keybind", mode = "Always", changeState = updateValue, skipflag = args.skipflag, oldargs = args, parentToggleFlag = args._parentToggleFlag}
+                library.options[args.flag] = {type = "keybind", mode = "Always", changeState = updateValue, skipflag = args.skipflag, oldargs = args, parentToggleFlag = args._parentToggleFlag, _active = nil}
     
                 updateValue(args.key or Enum.KeyCode.Unknown)
             end
@@ -3234,18 +3256,22 @@ game:GetService("RunService").RenderStepped:Connect(function()
         for flag, opt in pairs(library.options) do
             if opt.type == "keybind" and flag ~= "MenuKeybind" then
                 if library.flags[flag] and library.flags[flag] ~= Enum.KeyCode.Unknown then
-                    local keyNameStr = keyNames[library.flags[flag]] or library.flags[flag].Name
-                    -- Get the display name from parent toggle text, or keybind text, or flag
-                    local displayName = opt.oldargs._parentToggleText or opt.oldargs.text or flag
-                    -- Determine if this keybind's parent toggle is active
-                    local isActive = false
-                    local parentFlag = opt.parentToggleFlag or opt.oldargs._parentToggleFlag
-                    if parentFlag and library.flags[parentFlag] then
-                        isActive = true
-                    elseif opt.mode == "Always" then
-                        isActive = true
+                    -- Only show if the parent toggle is checked
+                    local parentFlag = opt.parentToggleFlag or (opt.oldargs and opt.oldargs._parentToggleFlag)
+                    if parentFlag and not library.flags[parentFlag] then
+                        continue
                     end
-                    table.insert(activeBinds, {text = tostring(displayName), key = keyNameStr, mode = opt.mode or "Always", active = isActive})
+                    local keyNameStr = keyNames[library.flags[flag]] or library.flags[flag].Name
+                    local displayName = (opt.oldargs and opt.oldargs._parentToggleText) or (opt.oldargs and opt.oldargs.text) or flag
+                    -- Determine if this keybind is actively engaged
+                    local isActive = false
+                    local mode = opt.mode or "Always"
+                    if mode == "Always" then
+                        isActive = true
+                    else
+                        isActive = opt._active == true
+                    end
+                    table.insert(activeBinds, {text = tostring(displayName), key = keyNameStr, mode = mode, active = isActive})
                 end
             end
         end
@@ -3258,7 +3284,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 lbl.BackgroundTransparency = 1
                 lbl.Size = UDim2.new(1, -8, 0, 20)
                 lbl.Font = Enum.Font.Code
-                lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+                lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
                 lbl.TextSize = 13
                 lbl.TextStrokeTransparency = 0
                 lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -3282,11 +3308,32 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
             lbl.Text = string.format("  [%s] %s", bind.key, bind.text)
             lbl.Mode.Text = string.format("[%s]", string.lower(bind.mode))
-            -- Highlight active modules in green
+            -- Apply arraylist-style accent gradient when active, dim when inactive
             if bind.active then
-                lbl.TextColor3 = Color3.fromRGB(100, 255, 100)
+                lbl.TextColor3 = Color3.new(1, 1, 1)
+                local grad = lbl:FindFirstChild("UIGradient")
+                if not grad then
+                    grad = Instance.new("UIGradient")
+                    grad.Rotation = 45
+                    grad.Parent = lbl
+                end
+                local c = library.libColor
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, c),
+                    ColorSequenceKeypoint.new(0.35, c),
+                    ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+                    ColorSequenceKeypoint.new(0.65, c),
+                    ColorSequenceKeypoint.new(1, c)
+                })
+                local waveOffset = math.sin(tick() * 0.8 + (i * 0.3))
+                grad.Offset = Vector2.new(waveOffset, 0)
+                grad.Enabled = true
             else
                 lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+                local grad = lbl:FindFirstChild("UIGradient")
+                if grad then
+                    grad.Enabled = false
+                end
             end
             lbl.Visible = true
             kbHeight = kbHeight + 20
