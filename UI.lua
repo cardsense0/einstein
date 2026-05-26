@@ -31,9 +31,9 @@ local function updateTitle()
     local hex = colorToHex(library.libColor)
     if library.flags["show game name"] then
         if cachedGameName then
-            menu.bg.pre.Text = 'einstein<font color="' .. hex .. '">.hook</font> | ' .. cachedGameName
+            menu.bg.pre.Text = 'sentinel<font color="' .. hex .. '">.pro</font> | ' .. cachedGameName
         else
-            menu.bg.pre.Text = 'einstein<font color="' .. hex .. '">.hook</font> | Loading...'
+            menu.bg.pre.Text = 'sentinel<font color="' .. hex .. '">.pro</font> | Loading...'
             if not fetchingGameName then
                 fetchingGameName = true
                 spawn(function()
@@ -46,7 +46,7 @@ local function updateTitle()
             end
         end
     else
-        menu.bg.pre.Text = 'einstein<font color="' .. hex .. '">.hook</font>'
+        menu.bg.pre.Text = 'sentinel<font color="' .. hex .. '">.pro</font>'
     end
 end
 
@@ -180,7 +180,7 @@ function library:showColorContextMenu(input, flag, applyCallback)
     end
 
     local mousePos = inputService:GetMouseLocation()
-    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Einstein_Notifications")
+    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Sentinel_Notifications")
     if not ctxGui then return end
 
     -- Full-screen transparent overlay to catch clicks outside the menu
@@ -279,7 +279,7 @@ function library:showKeybindContextMenu(input, flag, applyCallback)
     end
 
     local mousePos = inputService:GetMouseLocation()
-    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Einstein_Notifications")
+    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Sentinel_Notifications")
     if not ctxGui then return end
 
     local overlay = Instance.new("TextButton")
@@ -364,7 +364,7 @@ function library:showColorContextMenu(input, flag, applyCallback)
     end
 
     local mousePos = inputService:GetMouseLocation()
-    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Einstein_Notifications")
+    local ctxGui = game:GetService("CoreGui"):FindFirstChild("Sentinel_Notifications")
     if not ctxGui then return end
 
     local overlay = Instance.new("TextButton")
@@ -457,7 +457,7 @@ library.options["notify_offset_x"] = {skipflag = false}
 library.options["notify_offset_y"] = {skipflag = false}
 
 local notifySGui = Instance.new("ScreenGui")
-notifySGui.Name = "Einstein_Notifications"
+notifySGui.Name = "Sentinel_Notifications"
 notifySGui.Parent = game:GetService("CoreGui")
 notifySGui.DisplayOrder = 100
 
@@ -2771,7 +2771,7 @@ function library:createConfig()
         end
     end
     pcall(function()
-        writefile("Einstein/"..name..".cfg",game:GetService("HttpService"):JSONEncode(jig))
+        writefile("Sentinel/"..name..".cfg",game:GetService("HttpService"):JSONEncode(jig))
         library:notify("Succesfully created config "..name..".cfg.")
         library:refreshConfigs()
     end)
@@ -2794,7 +2794,7 @@ function library:saveConfig()
         end
     end
     pcall(function()
-        writefile("Einstein/"..name..".cfg",game:GetService("HttpService"):JSONEncode(jig))
+        writefile("Sentinel/"..name..".cfg",game:GetService("HttpService"):JSONEncode(jig))
         library:notify("Succesfully updated config "..name..".cfg.")
         library:refreshConfigs()
     end)
@@ -2806,11 +2806,11 @@ function library:loadConfig()
         library:notify("No config selected.")
         return
     end
-    if not isfile("Einstein/"..name..".cfg") then
+    if not isfile("Sentinel/"..name..".cfg") then
         library:notify("Config file not found.")
         return
     end
-    local config = game:GetService("HttpService"):JSONDecode(readfile("Einstein/"..name..".cfg"))
+    local config = game:GetService("HttpService"):JSONDecode(readfile("Sentinel/"..name..".cfg"))
     local skipKeys = {["selected_config"] = true, ["config_name"] = true}
     for i,v in next, library.options do
         if skipKeys[i] then continue end
@@ -2845,7 +2845,7 @@ end
 
 function library:refreshConfigs()
     local tbl = {}
-    for i,v in next, listfiles("Einstein") do
+    for i,v in next, listfiles("Sentinel") do
         local name = v:match("[/\\]?([^/\\]+)$") or v
         name = name:gsub("%.cfg$", "")
         if name ~= "" then
@@ -2858,8 +2858,8 @@ end
 function library:deleteConfig()
     local name = library.flags["selected_config"]
     if not name or name == "" then return end
-    if isfile("Einstein/"..name..".cfg") then
-        delfile("Einstein/"..name..".cfg")
+    if isfile("Sentinel/"..name..".cfg") then
+        delfile("Sentinel/"..name..".cfg")
         library:refreshConfigs()
         library:notify("Deleted "..name..".cfg.")
     end
@@ -2868,14 +2868,14 @@ end
 function library:setAutoload()
     local name = library.flags["selected_config"]
     if not name or name == "" then return library:notify("No config selected.") end
-    if not isfile("Einstein/"..name..".cfg") then return library:notify("Config file not found.") end
-    writefile("Einstein/autoload.txt", name)
+    if not isfile("Sentinel/"..name..".cfg") then return library:notify("Config file not found.") end
+    writefile("Sentinel/autoload.txt", name)
     library:notify("Autoload set to "..name..".cfg.")
 end
 
 function library:removeAutoload()
-    if isfile("Einstein/autoload.txt") then
-        delfile("Einstein/autoload.txt")
+    if isfile("Sentinel/autoload.txt") then
+        delfile("Sentinel/autoload.txt")
         library:notify("Autoload removed.")
     else
         library:notify("No autoload is set.")
@@ -2883,8 +2883,8 @@ function library:removeAutoload()
 end
 
 function library:getAutoload()
-    if isfile("Einstein/autoload.txt") then
-        local content = readfile("Einstein/autoload.txt")
+    if isfile("Sentinel/autoload.txt") then
+        local content = readfile("Sentinel/autoload.txt")
         return content:gsub("[\n\r]", ""):gsub("^%s*(.-)%s*$", "%1")
     end
     return nil
@@ -2895,7 +2895,7 @@ end
 
 function library:loadAutoConfig()
     local name = library:getAutoload()
-    if name and name ~= "" and isfile("Einstein/"..name..".cfg") then
+    if name and name ~= "" and isfile("Sentinel/"..name..".cfg") then
         library.flags["selected_config"] = name
         if library.options["selected_config"] and library.options["selected_config"].changeState then
             library.options["selected_config"].changeState(name)
@@ -3037,7 +3037,7 @@ othersettings:addButtonRow({
         if library.Unloaded then return end
         library.Unloaded = true
         if library.OnUnload then pcall(library.OnUnload) end
-        if getgenv and getgenv().einsteinhook_unload then pcall(getgenv().einsteinhook_unload) end
+        if getgenv and getgenv().sentinel_unload then pcall(getgenv().sentinel_unload) end
         
         if menu then menu:Destroy() end
         if notifySGui then notifySGui:Destroy() end
@@ -3049,7 +3049,7 @@ othersettings:addButtonRow({
         if library.Unloaded then return end
         library.Unloaded = true
         if library.OnUnload then pcall(library.OnUnload) end
-        if getgenv and getgenv().einsteinhook_unload then pcall(getgenv().einsteinhook_unload) end
+        if getgenv and getgenv().sentinel_unload then pcall(getgenv().sentinel_unload) end
         
         if menu then menu:Destroy() end
         if notifySGui then notifySGui:Destroy() end
@@ -3058,8 +3058,8 @@ othersettings:addButtonRow({
         if library._keybindCtxMenu then library._keybindCtxMenu:Destroy() end
         
         task.wait(0.2)
-        if getgenv and getgenv().einsteinhook_reload then 
-            pcall(getgenv().einsteinhook_reload) 
+        if getgenv and getgenv().sentinel_reload then 
+            pcall(getgenv().sentinel_reload) 
         end
     end}
 })
@@ -3206,7 +3206,7 @@ end
 local wmPanel, wmContent, wmLayout = library:CreateDraggablePanel("", UDim2.new(0.5, -150, 0, 10), false)
 
 local textService = game:GetService("TextService")
-local worstCaseText = string.format("einstein.hook | %s | 999 fps | 9999 ms", game.Players.LocalPlayer.DisplayName)
+local worstCaseText = string.format("sentinel.pro | %s | 999 fps | 9999 ms", game.Players.LocalPlayer.DisplayName)
 local wmBounds = textService:GetTextSize(worstCaseText, 13, Enum.Font.Code, Vector2.new(9999, 100))
 
 wmPanel.Size = UDim2.new(0, wmBounds.X + 16, 0, 24)
@@ -3236,7 +3236,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if tick() - lastTick >= 1 then
         local ping = 0
         pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
-        local text = string.format("einstein.hook | %s | %d fps | %d ms", game.Players.LocalPlayer.DisplayName, frames, ping)
+        local text = string.format("sentinel.pro | %s | %d fps | %d ms", game.Players.LocalPlayer.DisplayName, frames, ping)
         wmTitle.Text = text
         
         frames = 0
@@ -3457,8 +3457,8 @@ end)
 
 -- Auto-fetch configs on startup
 pcall(function()
-    if not isfolder("Einstein") then
-        makefolder("Einstein")
+    if not isfolder("Sentinel") then
+        makefolder("Sentinel")
     end
     library:refreshConfigs()
     library:loadAutoConfig()
