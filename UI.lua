@@ -1684,7 +1684,17 @@ function library:addTab(name)
 				else
 					fill:TweenSize(UDim2.new(0,1,1,0),Enum.EasingDirection.In,Enum.EasingStyle.Sine,0.01)
                 end
-                valuetext.Text = tostring(value) .. (sub or "")
+                local decimals = 0
+                if args.round then
+                    local strRound = tostring(args.round)
+                    local decIdx = strRound:find("%.")
+                    if decIdx then decimals = #strRound - decIdx end
+                end
+                if decimals == 0 then
+                    valuetext.Text = tostring(math.floor(value)) .. (sub or "")
+                else
+                    valuetext.Text = string.format("%." .. decimals .. "f", value) .. (sub or "")
+                end
                 library.flags[args.flag] = value
                 if args.callback then
                     args.callback(value)
@@ -1848,7 +1858,17 @@ function library:addTab(name)
                     else
                         fill:TweenSize(UDim2.new(0,1,1,0),Enum.EasingDirection.In,Enum.EasingStyle.Sine,0.01)
                     end
-                    valuetext.Text = value..sub
+                    local decimals = 0
+                    if args.round then
+                        local strRound = tostring(args.round)
+                        local decIdx = strRound:find("%.")
+                        if decIdx then decimals = #strRound - decIdx end
+                    end
+                    if decimals == 0 then
+                        valuetext.Text = tostring(math.floor(value)) .. (sub or "")
+                    else
+                        valuetext.Text = string.format("%." .. decimals .. "f", value) .. (sub or "")
+                    end
                     library.flags[args.flag] = value
                     if args.callback then
                         args.callback(value)
@@ -2072,7 +2092,8 @@ function library:addTab(name)
             valuetext.Parent = main
             valuetext.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             valuetext.BackgroundTransparency = 1.000
-            valuetext.Position = UDim2.new(0.00200000009, 2, 0, 7)
+            valuetext.Position = UDim2.new(0.002, 2, 0, 0)
+            valuetext.Size = UDim2.new(1, -20, 1, 0)
             valuetext.ZIndex = 2
             valuetext.Font = Enum.Font.Code
             valuetext.Text = ""
@@ -2138,7 +2159,7 @@ function library:addTab(name)
                     end
 					local buttonText = ""
 					for i,v in pairs(library.flags[args.flag]) do
-						local jig = i ~= #library.flags[args.flag] and "," or ""
+						local jig = i ~= #library.flags[args.flag] and ", " or ""
 						buttonText = buttonText..v..jig
 					end
                     if buttonText == "" then buttonText = "..." end
@@ -2147,7 +2168,7 @@ function library:addTab(name)
 						v.off.TextColor3 = Color3.new(0.65,0.65,0.65)
 						for _i,_v in next, library.flags[args.flag] do
 							if v.Name == _v then
-								v.off.TextColor3 = Color3.new(1,1,1)
+								v.off.TextColor3 = library.libColor
 							end
 						end
 					end
@@ -2162,7 +2183,7 @@ function library:addTab(name)
 						if v.ClassName ~= "Frame" then continue end
 						v.off.TextColor3 = Color3.new(0.65,0.65,0.65)
                         if v.Name == library.flags[args.flag] then
-                            v.off.TextColor3 = Color3.new(1,1,1)
+                            v.off.TextColor3 = library.libColor
                         end
 					end
 					frame.Visible = false
