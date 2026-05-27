@@ -1930,7 +1930,7 @@ function library:addTab(name)
                 library.flags[args.flag] = box.Text
                 args.value = box.Text
                 if args.callback then
-                    args.callback()
+                    args.callback(box.Text)
                 end
             end)
             textbox.Name = "textbox"
@@ -2276,10 +2276,14 @@ function library:addTab(name)
                 end
                 library.options[args.flag].values = tbl
                 local currentVal = library.flags[args.flag]
-                if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
+                if args.multiselect then
                     updateValue(currentVal)
                 else
-                    updateValue(tbl[1])
+                    if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
+                        updateValue(currentVal)
+                    else
+                        updateValue(tbl[1])
+                    end
                 end
             end
 
