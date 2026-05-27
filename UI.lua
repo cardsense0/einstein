@@ -1991,7 +1991,13 @@ function library:addTab(name)
 
 
             library.flags[args.flag] = args.value or ""
-            library.options[args.flag] = {type = "textbox",changeState = function(text) box.Text = text end,skipflag = args.skipflag,oldargs = args}
+            library.options[args.flag] = {
+                type = "textbox",
+                changeState = function(txt) box.Text = txt end,
+                updateText = function(txt) text.Text = txt end,
+                skipflag = args.skipflag,
+                oldargs = args
+            }
         end
         function group:addDivider(args)
             groupbox.Size += UDim2.new(0, 0, 0, 10)
@@ -2162,7 +2168,7 @@ function library:addTab(name)
 						local jig = i ~= #library.flags[args.flag] and ", " or ""
 						buttonText = buttonText..v..jig
 					end
-                    if buttonText == "" then buttonText = "..." end
+                    if buttonText == "" then buttonText = "--" end
 					for i,v in next, holder:GetChildren() do
 						if v.ClassName ~= "Frame" then continue end
 						v.off.TextColor3 = Color3.new(0.65,0.65,0.65)
@@ -2246,10 +2252,23 @@ function library:addTab(name)
                 end
                 library.options[args.flag].values = tbl
                 local currentVal = library.flags[args.flag]
-                if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
-                    updateValue(currentVal)
+                if args.multiselect then
+                    if type(currentVal) == "table" then
+                        for i = #currentVal, 1, -1 do
+                            if not table.find(tbl, currentVal[i]) then
+                                table.remove(currentVal, i)
+                            end
+                        end
+                        updateValue(currentVal)
+                    else
+                        updateValue({})
+                    end
                 else
-                    updateValue(tbl[1])
+                    if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
+                        updateValue(currentVal)
+                    else
+                        updateValue(tbl[1])
+                    end
                 end
             end
 
