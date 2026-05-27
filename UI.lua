@@ -1753,6 +1753,7 @@ function library:addTab(name)
             for i = 1, count do
                 local args = sliders[i]
                 if not args or not args.flag or not args.max then continue end
+                local sub = args.sub or ""
 
                 local xPos = startX + (i - 1) * (btnWidth + gap)
                 local thisWidth = btnWidth
@@ -1766,6 +1767,7 @@ function library:addTab(name)
                 local fill = Instance.new("Frame")
                 local button = Instance.new("TextButton")
                 local valuetext = Instance.new("TextLabel")
+                local UIGradient = Instance.new("UIGradient")
                 local text = Instance.new("TextLabel")
 
                 slider.Name = "slider_" .. i
@@ -1797,7 +1799,7 @@ function library:addTab(name)
                 fill.BackgroundTransparency = 0.200
                 fill.BorderColor3 = Color3.fromRGB(60, 60, 60)
                 fill.BorderSizePixel = 0
-                fill.Size = UDim2.new(0, 10, 1, 0)
+                fill.Size = UDim2.new(0.5, 0, 1, 0)
                 
                 button.Name = "button"
                 button.Parent = main
@@ -1809,17 +1811,19 @@ function library:addTab(name)
                 button.TextColor3 = Color3.fromRGB(0, 0, 0)
                 button.TextSize = 14.000
                 
-                valuetext.Name = "valuetext"
-                valuetext.Parent = fill
+                valuetext.Parent = main
                 valuetext.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 valuetext.BackgroundTransparency = 1.000
-                valuetext.Position = UDim2.new(1, -25, 0, -8)
-                valuetext.Size = UDim2.new(0, 50, 0, 50)
+                valuetext.Position = UDim2.new(0.5, 0, 0.5, 0)
                 valuetext.Font = Enum.Font.Code
                 valuetext.Text = "0"
                 valuetext.TextColor3 = Color3.fromRGB(255, 255, 255)
-                valuetext.TextSize = 13.000
+                valuetext.TextSize = 14.000
                 valuetext.TextStrokeTransparency = 0.000
+
+                UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(105, 105, 105)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(121, 121, 121))}
+                UIGradient.Rotation = 90
+                UIGradient.Parent = main
                 
                 text.Name = "text"
                 text.Parent = slider
@@ -1834,64 +1838,60 @@ function library:addTab(name)
                 text.TextStrokeTransparency = 0.000
                 text.TextXAlignment = Enum.TextXAlignment.Left
 
-                local max_value = args.max
-                local min_value = args.min or 0
                 local entered = false
-                
+                local scrolling = false
+
                 local function updateValue(value)
-                    local percent = (value - min_value) / (max_value - min_value)
-                    percent = math.clamp(percent, 0, 1)
-                    library.flags[args.flag] = value
-                    
-                    local decimals = args.decimals or 1
-                    if decimals == 0 then
-                        valuetext.Text = tostring(math.floor(value)) .. (args.sub and args.sub or "")
+                    if library.colorpicking then return end
+                    if value ~= 0 then
+                        fill:TweenSize(UDim2.new(value/args.max,0,1,0),Enum.EasingDirection.In,Enum.EasingStyle.Sine,0.01)
                     else
-                        local formatString = "%." .. decimals .. "f"
-                        valuetext.Text = string.format(formatString, value) .. (args.sub and args.sub or "")
+                        fill:TweenSize(UDim2.new(0,1,1,0),Enum.EasingDirection.In,Enum.EasingStyle.Sine,0.01)
                     end
-                    fill.Size = UDim2.new(percent, 0, 1, 0)
-                    if args.callback then args.callback(value) end
+                    valuetext.Text = value..sub
+                    library.flags[args.flag] = value
+                    if args.callback then
+                        args.callback(value)
+                    end
                 end
-
-                if args.value then
-                    library.flags[args.flag] = args.value
-                    updateValue(args.value)
-                else
-                    library.flags[args.flag] = min_value
-                    updateValue(min_value)
+                local function updateScroll()
+                    if scrolling or library.scrolling or not newTab.Visible or library.colorpicking then return end
+                    while inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and menu.Enabled do runService.RenderStepped:Wait()
+                        library.scrolling = true
+                        valuetext.TextColor3 = Color3.fromRGB(255,255,255)
+                        scrolling = true
+                        local value = args.min + ((mouse.X - button.AbsolutePosition.X) / button.AbsoluteSize.X) * (args.max - args.min)
+                        if value < 0 then value = 0 end
+                        if value > args.max then value = args.max end
+                        if value < args.min then value = args.min end
+                        local rounded = args.round and (math.floor(value / args.round + 0.5) * args.round) or math.floor(value)
+                        updateValue(rounded)
+                    end
+                    if scrolling and not entered then
+                        valuetext.TextColor3 = Color3.fromRGB(255,255,255)
+                    end
+                    if not menu.Enabled then
+                        entered = false
+                    end
+                    scrolling = false
+                    library.scrolling = false
                 end
-
-                local function getSliderValue(input)
-                    local sliderX = main.AbsolutePosition.X
-                    local sliderSize = main.AbsoluteSize.X
-                    local mouseX = input.Position.X
-                    local percent = math.clamp((mouseX - sliderX) / sliderSize, 0, 1)
-                    local value = min_value + (max_value - min_value) * percent
-                    return value
-                end
-
-                local dragging = false
-                button.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        local value = getSliderValue(input)
-                        updateValue(value)
+                button.MouseEnter:connect(function()
+                    if library.colorpicking then return end
+                    if scrolling or entered then return end
+                    entered = true
+                    main.BorderColor3 = library.libColor
+                    while entered do wait()
+                        updateScroll()
                     end
                 end)
-                inputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
+                button.MouseLeave:connect(function()
+                    entered = false
+                    main.BorderColor3 = Color3.fromRGB(60, 60, 60)
                 end)
-                inputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        local value = getSliderValue(input)
-                        updateValue(value)
-                    end
-                end)
-                button.MouseEnter:Connect(function() main.BorderColor3 = library.libColor end)
-                button.MouseLeave:Connect(function() main.BorderColor3 = Color3.fromRGB(50, 50, 50) end)
+                library.flags[args.flag] = 0
+                library.options[args.flag] = {type = "slider",changeState = updateValue,skipflag = args.skipflag,oldargs = args}
+                updateValue(args.value or 0)
             end
         end
         function group:addTextbox(args)
