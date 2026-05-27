@@ -1991,13 +1991,7 @@ function library:addTab(name)
 
 
             library.flags[args.flag] = args.value or ""
-            library.options[args.flag] = {
-                type = "textbox",
-                changeState = function(txt) box.Text = txt end,
-                updateText = function(txt) text.Text = txt end,
-                skipflag = args.skipflag,
-                oldargs = args
-            }
+            library.options[args.flag] = {type = "textbox",changeState = function(text) box.Text = text end,skipflag = args.skipflag,oldargs = args}
         end
         function group:addDivider(args)
             groupbox.Size += UDim2.new(0, 0, 0, 10)
@@ -2027,6 +2021,36 @@ function library:addTab(name)
             main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
             main.BorderColor3 = Color3.fromRGB(30, 30, 30)
             main.Size = UDim2.new(0, 191, 0, 1)
+        end
+        function group:addLabel(args)
+            groupbox.Size += UDim2.new(0, 0, 0, 16)
+
+            local labelFrame = Instance.new("Frame")
+            labelFrame.Name = "label"
+            labelFrame.Parent = grouper
+            labelFrame.BackgroundTransparency = 1
+            labelFrame.BorderSizePixel = 0
+            labelFrame.Size = UDim2.new(1, 0, 0, 16)
+
+            local labelText = Instance.new("TextLabel")
+            labelText.Name = "text"
+            labelText.Parent = labelFrame
+            labelText.BackgroundTransparency = 1
+            labelText.Position = UDim2.new(0.03, -1, 0, 0)
+            labelText.Size = UDim2.new(1, -10, 1, 0)
+            labelText.Font = Enum.Font.Code
+            labelText.Text = args.text or ""
+            labelText.TextColor3 = Color3.fromRGB(180, 180, 180)
+            labelText.TextSize = 13
+            labelText.TextStrokeTransparency = 0
+            labelText.TextXAlignment = Enum.TextXAlignment.Left
+            labelText.TextTruncate = Enum.TextTruncate.AtEnd
+
+            local labelObj = {}
+            function labelObj:Update(newText)
+                labelText.Text = newText
+            end
+            return labelObj
         end
         function group:addList(args)
             if not args.flag or not args.values then return warn("⚠️ incorrect arguments ⚠️") end
@@ -2252,23 +2276,10 @@ function library:addTab(name)
                 end
                 library.options[args.flag].values = tbl
                 local currentVal = library.flags[args.flag]
-                if args.multiselect then
-                    if type(currentVal) == "table" then
-                        for i = #currentVal, 1, -1 do
-                            if not table.find(tbl, currentVal[i]) then
-                                table.remove(currentVal, i)
-                            end
-                        end
-                        updateValue(currentVal)
-                    else
-                        updateValue({})
-                    end
+                if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
+                    updateValue(currentVal)
                 else
-                    if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
-                        updateValue(currentVal)
-                    else
-                        updateValue(tbl[1])
-                    end
+                    updateValue(tbl[1])
                 end
             end
 
