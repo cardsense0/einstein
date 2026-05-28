@@ -1914,6 +1914,7 @@ function library:addTab(name)
                 library.options[args.flag] = {type = "slider",changeState = updateValue,skipflag = args.skipflag,oldargs = args}
                 updateValue(args.value or 0)
             end
+        end
         function group:addRangeSlider(args,sub)
             if not args.flag or not args.max then return warn("⚠️ incorrect arguments ⚠️") end
             groupbox.Size += UDim2.new(0, 0, 0, 30)
