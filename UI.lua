@@ -1163,13 +1163,22 @@ function library:addTab(name)
                     end
                     if not next and key == library.flags[args.flag] then
                         local opt = library.options[args.flag]
+                        local parentStateChanged = false
+                        local newState = nil
                         if opt then
                             local m = opt.mode or "Always"
                             if m == "Toggle" then
                                 opt._active = not opt._active
+                                parentStateChanged = true
+                                newState = opt._active
                             elseif m == "Hold" then
                                 opt._active = true
+                                parentStateChanged = true
+                                newState = true
                             end
+                        end
+                        if parentStateChanged and args._parentToggleFlag and library.options[args._parentToggleFlag] and library.options[args._parentToggleFlag].changeState then
+                            library.options[args._parentToggleFlag].changeState(newState)
                         end
                         if args.callback then args.callback() end
                     end
@@ -1179,8 +1188,14 @@ function library:addTab(name)
                     local key = key.KeyCode == Enum.KeyCode.Unknown and key.UserInputType or key.KeyCode
                     if key == library.flags[args.flag] then
                         local opt = library.options[args.flag]
-                        if opt and (opt.mode or "Always") == "Hold" then
-                            opt._active = false
+                        if opt then
+                            local m = opt.mode or "Always"
+                            if m == "Hold" then
+                                opt._active = false
+                                if args._parentToggleFlag and library.options[args._parentToggleFlag] and library.options[args._parentToggleFlag].changeState then
+                                    library.options[args._parentToggleFlag].changeState(false)
+                                end
+                            end
                         end
                     end
                 end)
@@ -1959,19 +1974,7 @@ function library:addTab(name)
             fill.BorderColor3 = Color3.fromRGB(60, 60, 60)
             fill.BorderSizePixel = 0
             
-            handle1.Name = "handle1"
-            handle1.Parent = main
-            handle1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            handle1.BorderSizePixel = 0
-            handle1.Size = UDim2.new(0, 2, 1, 4)
-            handle1.Position = UDim2.new(0, 0, 0, -2)
-            
-            handle2.Name = "handle2"
-            handle2.Parent = main
-            handle2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            handle2.BorderSizePixel = 0
-            handle2.Size = UDim2.new(0, 2, 1, 4)
-            handle2.Position = UDim2.new(1, -2, 0, -2)
+            -- Removed handle1 and handle2 frames to make it look clean like addSlider
 
             button.Name = "button"
             button.Parent = main
@@ -2038,9 +2041,7 @@ function library:addTab(name)
                 local p1 = (val1 - args.min) / (args.max - args.min)
                 local p2 = (val2 - args.min) / (args.max - args.min)
                 
-                handle1.Position = UDim2.new(p1, -1, 0, -2)
-                handle2.Position = UDim2.new(p2, -1, 0, -2)
-                
+                -- Just set fill to bridge val1 and val2
                 fill.Position = UDim2.new(p1, 0, 0, 0)
                 fill.Size = UDim2.new(p2 - p1, 0, 1, 0)
                 
