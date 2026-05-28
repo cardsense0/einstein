@@ -1741,6 +1741,7 @@ function library:addTab(name)
             library.flags[args.flag] = 0
             library.options[args.flag] = {type = "slider",changeState = updateValue,skipflag = args.skipflag,oldargs = args}
             updateValue(args.value or 0)
+            return slider
         end
 
         function group:addSliderRow(sliders)
@@ -1913,6 +1914,212 @@ function library:addTab(name)
                 library.options[args.flag] = {type = "slider",changeState = updateValue,skipflag = args.skipflag,oldargs = args}
                 updateValue(args.value or 0)
             end
+        function group:addRangeSlider(args,sub)
+            if not args.flag or not args.max then return warn("⚠️ incorrect arguments ⚠️") end
+            groupbox.Size += UDim2.new(0, 0, 0, 30)
+
+            local slider = Instance.new("Frame")
+            local bg = Instance.new("Frame")
+            local main = Instance.new("Frame")
+            local fill = Instance.new("Frame")
+            local handle1 = Instance.new("Frame")
+            local handle2 = Instance.new("Frame")
+            local button = Instance.new("TextButton")
+            local valuetext = Instance.new("TextLabel")
+            local UIGradient = Instance.new("UIGradient")
+            local text = Instance.new("TextLabel")
+
+            slider.Name = "rangeslider"
+            slider.Parent = grouper
+            slider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            slider.BackgroundTransparency = 1.000
+            slider.BorderSizePixel = 0
+            slider.Size = UDim2.new(1, 0, 0, 30)
+            
+            bg.Name = "bg"
+            bg.Parent = slider
+            bg.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            bg.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            bg.BorderSizePixel = 2
+            bg.Position = UDim2.new(0.02, -1, 0, 16)
+            bg.Size = UDim2.new(0, 205, 0, 10)
+            
+            main.Name = "main"
+            main.Parent = bg
+            main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            main.BorderColor3 = Color3.fromRGB(50, 50, 50)
+            main.Size = UDim2.new(1, 0, 1, 0)
+            
+            fill.Name = "fill"
+            fill.Parent = main
+            fill.BackgroundColor3 = library.libColor
+            table.insert(library.accentElements, {obj = fill, prop = "BackgroundColor3"})
+            fill.BackgroundTransparency = 0.200
+            fill.BorderColor3 = Color3.fromRGB(60, 60, 60)
+            fill.BorderSizePixel = 0
+            
+            handle1.Name = "handle1"
+            handle1.Parent = main
+            handle1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            handle1.BorderSizePixel = 0
+            handle1.Size = UDim2.new(0, 2, 1, 4)
+            handle1.Position = UDim2.new(0, 0, 0, -2)
+            
+            handle2.Name = "handle2"
+            handle2.Parent = main
+            handle2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            handle2.BorderSizePixel = 0
+            handle2.Size = UDim2.new(0, 2, 1, 4)
+            handle2.Position = UDim2.new(1, -2, 0, -2)
+
+            button.Name = "button"
+            button.Parent = main
+            button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            button.BackgroundTransparency = 1.000
+            button.Size = UDim2.new(0, 191, 1, 0)
+            button.Font = Enum.Font.SourceSans
+            button.Text = ""
+            button.TextColor3 = Color3.fromRGB(0, 0, 0)
+            button.TextSize = 14.000
+            
+            valuetext.Parent = main
+            valuetext.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            valuetext.BackgroundTransparency = 1.000
+            valuetext.Position = UDim2.new(0.5, 0, 0.5, 0)
+            valuetext.Font = Enum.Font.Code
+            valuetext.Text = "0 - 10"
+            valuetext.TextColor3 = Color3.fromRGB(255, 255, 255)
+            valuetext.TextSize = 14.000
+            valuetext.TextStrokeTransparency = 0.000
+            
+            UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(105, 105, 105)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(121, 121, 121))}
+            UIGradient.Rotation = 90
+            UIGradient.Parent = main
+            
+            text.Name = "text"
+            text.Parent = slider
+            text.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            text.BackgroundTransparency = 1.000
+            text.Position = UDim2.new(0.0299999993, -1, 0, 7)
+            text.ZIndex = 2
+            text.Font = Enum.Font.Code
+            text.Text = args.text or args.flag
+            text.TextColor3 = Color3.fromRGB(244, 244, 244)
+            text.TextSize = 13.000
+            text.TextStrokeTransparency = 0.000
+            text.TextXAlignment = Enum.TextXAlignment.Left
+
+            local entered = false
+            local scrolling = false
+            local activeHandle = nil
+            local val1 = args.min
+            local val2 = args.max
+
+            local function updateVisuals()
+                local decimals = 0
+                if args.round then
+                    local strRound = tostring(args.round)
+                    local decIdx = strRound:find("%.")
+                    if decIdx then decimals = #strRound - decIdx end
+                end
+                
+                local v1Str, v2Str
+                if decimals == 0 then
+                    v1Str = tostring(math.floor(val1))
+                    v2Str = tostring(math.floor(val2))
+                else
+                    v1Str = string.format("%." .. decimals .. "f", val1)
+                    v2Str = string.format("%." .. decimals .. "f", val2)
+                end
+                
+                valuetext.Text = v1Str .. (sub or "") .. " - " .. v2Str .. (sub or "")
+                
+                local p1 = (val1 - args.min) / (args.max - args.min)
+                local p2 = (val2 - args.min) / (args.max - args.min)
+                
+                handle1.Position = UDim2.new(p1, -1, 0, -2)
+                handle2.Position = UDim2.new(p2, -1, 0, -2)
+                
+                fill.Position = UDim2.new(p1, 0, 0, 0)
+                fill.Size = UDim2.new(p2 - p1, 0, 1, 0)
+                
+                library.flags[args.flag .. "_min"] = val1
+                library.flags[args.flag .. "_max"] = val2
+                
+                if args.callback then
+                    args.callback(val1, val2)
+                end
+            end
+
+            local function updateScroll()
+                if scrolling or library.scrolling or not newTab.Visible or library.colorpicking then return end
+                while inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and menu.Enabled do runService.RenderStepped:Wait()
+                    library.scrolling = true
+                    valuetext.TextColor3 = Color3.fromRGB(255,255,255)
+                    scrolling = true
+                    
+                    local percent = (mouse.X - button.AbsolutePosition.X) / button.AbsoluteSize.X
+                    local value = args.min + percent * (args.max - args.min)
+                    if value < args.min then value = args.min end
+                    if value > args.max then value = args.max end
+                    local rounded = args.round and (math.floor(value / args.round + 0.5) * args.round) or math.floor(value)
+                    
+                    if not activeHandle then
+                        local d1 = math.abs(rounded - val1)
+                        local d2 = math.abs(rounded - val2)
+                        if d1 <= d2 then
+                            activeHandle = 1
+                        else
+                            activeHandle = 2
+                        end
+                    end
+                    
+                    if activeHandle == 1 then
+                        if rounded > val2 then rounded = val2 end
+                        val1 = rounded
+                    else
+                        if rounded < val1 then rounded = val1 end
+                        val2 = rounded
+                    end
+                    
+                    updateVisuals()
+                end
+                if scrolling and not entered then
+                    valuetext.TextColor3 = Color3.fromRGB(255,255,255)
+                end
+                if not menu.Enabled then
+                    entered = false
+                end
+                scrolling = false
+                library.scrolling = false
+                activeHandle = nil
+            end
+
+            button.MouseEnter:connect(function()
+                if library.colorpicking then return end
+                if scrolling or entered then return end
+                entered = true
+                main.BorderColor3 = library.libColor
+                while entered do wait()
+                    updateScroll()
+                end
+            end)
+            button.MouseLeave:connect(function()
+                entered = false
+                main.BorderColor3 = Color3.fromRGB(60, 60, 60)
+            end)
+            
+            if args.value then
+                val1 = args.value[1] or args.min
+                val2 = args.value[2] or args.max
+            end
+            
+            library.flags[args.flag .. "_min"] = val1
+            library.flags[args.flag .. "_max"] = val2
+            library.options[args.flag] = {type = "rangeslider", changeState = function(v) val1=v[1]; val2=v[2]; updateVisuals() end, skipflag = args.skipflag, oldargs = args}
+            
+            updateVisuals()
+            return slider
         end
         function group:addTextbox(args)
             if not args.flag then return warn("⚠️ incorrect arguments ⚠️") end
