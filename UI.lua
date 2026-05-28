@@ -1106,8 +1106,8 @@ function library:addTab(name)
                 keybind.BackgroundTransparency = 1.000
                 keybind.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 keybind.BorderSizePixel = 0
-                keybind.AnchorPoint = Vector2.new(1, 0)
-                keybind.Position = UDim2.new(1, -6, 0.272, 0)
+                keybind.AnchorPoint = Vector2.new(1, 0.5)
+                keybind.Position = UDim2.new(1, -6, 0.5, 0)
                 keybind.Size = UDim2.new(0, 50, 0, 15)
                 
                 button_bg.Name = "bg"
@@ -1930,7 +1930,7 @@ function library:addTab(name)
                 library.flags[args.flag] = box.Text
                 args.value = box.Text
                 if args.callback then
-                    args.callback(box.Text)
+                    args.callback()
                 end
             end)
             textbox.Name = "textbox"
@@ -2276,14 +2276,10 @@ function library:addTab(name)
                 end
                 library.options[args.flag].values = tbl
                 local currentVal = library.flags[args.flag]
-                if args.multiselect then
+                if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
                     updateValue(currentVal)
                 else
-                    if currentVal and currentVal ~= "" and table.find(tbl, currentVal) then
-                        updateValue(currentVal)
-                    else
-                        updateValue(tbl[1])
-                    end
+                    updateValue(tbl[1])
                 end
             end
 
